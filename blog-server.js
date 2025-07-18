@@ -121,7 +121,7 @@ async function getGoogleSheetsData() {
     // Coba direct connection terlebih dahulu
     try {
         console.log('Mencoba koneksi langsung ke Google Sheets...');
-        const directConnector = new DirectSheetsConnector(SPREADSHEET_ID);
+        const directConnector = new DirectSheetsConnector(SPREADSHEET_ID, SHEET_NAME);
         const data = await directConnector.fetchData();
         
         if (data && data.length > 0) {
@@ -129,7 +129,8 @@ async function getGoogleSheetsData() {
             return data;
         }
     } catch (error) {
-        console.log('Koneksi langsung gagal, mencoba dengan API Key...');
+        console.log('Koneksi langsung gagal:', error.message);
+        console.log('Mencoba dengan API Key...');
     }
 
     // Jika API key tidak dikonfigurasi, gunakan demo data

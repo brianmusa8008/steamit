@@ -5,7 +5,15 @@ class DirectSheetsConnector {
     constructor(spreadsheetId, sheetName = 'Sheet1') {
         this.spreadsheetId = spreadsheetId;
         this.sheetName = sheetName;
-        this.csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=0`;
+        // Try multiple URL formats for public sheets
+        this.csvUrls = [
+            `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=0`,
+            `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`,
+            `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`,
+            `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv`,
+            `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&gid=0`,
+            `https://docs.google.com/spreadsheets/d/${spreadsheetId}/pub?output=csv&gid=0`
+        ];
     }
 
     // Convert CSV text to JSON objects
@@ -51,24 +59,51 @@ class DirectSheetsConnector {
         return values;
     }
 
-    // Fetch data from Google Sheets
+    // Fetch data from Google Sheets with multiple URL attempts
     async fetchData() {
-        try {
-            const response = await fetch(this.csvUrl);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+        let lastError = null;
+        
+        // Try each URL format until one works
+        for (const url of this.csvUrls) {
+            try {
+                console.log(`Mencoba URL: ${url}`);
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    },
+                    redirect: 'follow'
+                });
+                
+                if (response.ok) {
+                    const csvText = await response.text();
+                    console.log(`Berhasil mengambil data dari: ${url}`);
+                    console.log(`Data preview: ${csvText.substring(0, 200)}...`);
+                    
+                    // Check if it's actually CSV data, not HTML error page
+                    if (csvText.includes('<!DOCTYPE html>') || csvText.includes('<html')) {
+                        console.log(`URL mengembalikan HTML error page: ${url}`);
+                        lastError = new Error(`URL returned HTML error page: ${url}`);
+                        continue;
+                    }
+                    
+                    const data = this.csvToJson(csvText);
+                    
+                    if (data && data.length > 0) {
+                        return this.processForBlog(data);
+                    }
+                } else {
+                    console.log(`URL gagal (${response.status}): ${url}`);
+                    lastError = new Error(`HTTP error! status: ${response.status} for ${url}`);
+                }
+            } catch (error) {
+                console.log(`Error dengan URL ${url}:`, error.message);
+                lastError = error;
             }
-            
-            const csvText = await response.text();
-            const data = this.csvToJson(csvText);
-            
-            // Process data for blog format
-            return this.processForBlog(data);
-        } catch (error) {
-            console.error('Error fetching data from Google Sheets:', error);
-            throw error;
         }
+        
+        // If all URLs failed, throw the last error
+        throw lastError || new Error('All URL attempts failed');
     }
 
     // Process raw data for blog format
