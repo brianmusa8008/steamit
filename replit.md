@@ -61,6 +61,11 @@ This project has evolved from converting Google Apps Script files to creating a 
 - **2025-01-18**: Added Cloudflare Workers script for serverless blog deployment
 - **2025-01-18**: Generated comprehensive deployment guide and spreadsheet structure documentation
 - **2025-01-18**: Configured workflows for Blog Server and Streamlit App with proper port management
+- **2025-01-18**: Added direct Google Sheets connection (no API key required) with CSV export method
+- **2025-01-18**: Updated spreadsheet ID to user's specific sheet (14K69q8SMd3pCAROB1YQMDrmuw8y6QphxAslF_y-3NrM)
+- **2025-01-18**: Created sample spreadsheet data (.xlsx and .csv) with import guide
+- **2025-01-18**: Implemented Cloudflare API integration with random name generation and workflow management
+- **2025-01-18**: Added comprehensive CloudflareManager class with auto-deployment features
 
 ## User Preferences
 - Language: Indonesian communication preferred

@@ -33,8 +33,11 @@ app.use((req, res, next) => {
 
 // Environment variables
 const GOOGLE_SHEETS_API_KEY = process.env.GOOGLE_SHEETS_API_KEY || 'your-api-key-here';
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '1igvz_FisR1DXWbllea7_oFhh6sLE6lIgtxXPMdmAE3A';
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '14K69q8SMd3pCAROB1YQMDrmuw8y6QphxAslF_y-3NrM';
 const SHEET_NAME = process.env.SHEET_NAME || 'WEBSITE';
+
+// Import direct connector
+const DirectSheetsConnector = require('./direct-sheets-connector');
 
 // Blog configuration
 const BLOG_CONFIG = {
@@ -113,6 +116,20 @@ initializeFetch().then(() => {
 async function getGoogleSheetsData() {
     if (!fetch) {
         await initializeFetch();
+    }
+
+    // Coba direct connection terlebih dahulu
+    try {
+        console.log('Mencoba koneksi langsung ke Google Sheets...');
+        const directConnector = new DirectSheetsConnector(SPREADSHEET_ID);
+        const data = await directConnector.fetchData();
+        
+        if (data && data.length > 0) {
+            console.log(`Data berhasil dimuat dari Google Sheets: ${data.length} rows`);
+            return data;
+        }
+    } catch (error) {
+        console.log('Koneksi langsung gagal, mencoba dengan API Key...');
     }
 
     // Jika API key tidak dikonfigurasi, gunakan demo data
