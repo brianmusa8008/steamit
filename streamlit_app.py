@@ -123,10 +123,38 @@ with st.sidebar.expander("☁️ Cloudflare Workers AI Settings"):
     # Worker name options
     worker_name_prefix = st.text_input("Worker Name Prefix", value=config.get("worker_name_prefix", "blog"), help="Prefix for worker name")
     auto_generate_name = st.checkbox("Auto-generate available name", value=config.get("auto_generate_name", True), help="Automatically generate available worker name")
+    
+    # Show save status for Cloudflare settings
+    if cf_api_token and cf_account_id:
+        st.success("✅ Cloudflare settings saved")
+    elif cf_api_token or cf_account_id:
+        st.warning("⚠️ Cloudflare settings incomplete")
 
-# Auto-save indicator
+# Auto-save indicator dengan detail
 if os.path.exists(CONFIG_FILE):
-    st.sidebar.success("🔄 Auto-save aktif - Data tersimpan")
+    st.sidebar.success("🔄 Auto-save aktif - Semua pengaturan tersimpan otomatis")
+    
+    # Show detailed save status
+    with st.sidebar.expander("💾 Status Penyimpanan", expanded=False):
+        st.write("**Google Sheets:**")
+        if spreadsheet_id and sheet_name:
+            st.write("✅ Spreadsheet ID & Sheet Name")
+        else:
+            st.write("⚠️ Belum lengkap")
+            
+        st.write("**Cloudflare Workers:**")
+        if cf_api_token and cf_account_id:
+            st.write("✅ API Token & Account ID")
+        else:
+            st.write("⚠️ Belum lengkap")
+            
+        st.write("**Blog Settings:**")
+        if blog_title and blog_description:
+            st.write("✅ Judul & Deskripsi Blog")
+        else:
+            st.write("⚠️ Belum lengkap")
+else:
+    st.sidebar.info("📝 Pengaturan akan tersimpan otomatis")
 
 # Blog Configuration
 with st.sidebar.expander("📝 Blog Settings", expanded=True):
@@ -151,8 +179,27 @@ current_config = {
 
 # Save configuration if changed
 if current_config != config:
+    # Identify what changed
+    changed_keys = []
+    for key, value in current_config.items():
+        if key not in config or config[key] != value:
+            if key == "cf_api_token" and value:
+                changed_keys.append("Cloudflare API Token")
+            elif key == "cf_account_id" and value:
+                changed_keys.append("Cloudflare Account ID")
+            elif key == "spreadsheet_id" and value:
+                changed_keys.append("Spreadsheet ID")
+            elif key == "sheet_name" and value:
+                changed_keys.append("Sheet Name")
+            elif key in ["blog_title", "blog_description", "blog_keywords"]:
+                changed_keys.append(f"Blog {key.replace('_', ' ').title()}")
+    
     save_config(current_config)
     config = current_config
+    
+    # Show notification if something important was saved
+    if changed_keys:
+        st.sidebar.success(f"💾 Tersimpan: {', '.join(changed_keys)}")
 
 # Main content area
 tab1, tab2, tab3, tab4 = st.tabs(["🏠 Dashboard", "📝 Template Generator", "🚀 Deploy", "📊 Preview"])
