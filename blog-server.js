@@ -118,78 +118,22 @@ async function getGoogleSheetsData() {
         await initializeFetch();
     }
 
-    // Coba direct connection terlebih dahulu
+    // Koneksi langsung ke Google Sheets (tanpa API Key)
     try {
-        console.log('Mencoba koneksi langsung ke Google Sheets...');
+        console.log('Mengambil data dari Google Sheets...');
         const directConnector = new DirectSheetsConnector(SPREADSHEET_ID, SHEET_NAME);
         const data = await directConnector.fetchData();
         
         if (data && data.length > 0) {
             console.log(`Data berhasil dimuat dari Google Sheets: ${data.length} rows`);
             return data;
-        }
-    } catch (error) {
-        console.log('Koneksi langsung gagal:', error.message);
-        console.log('Mencoba dengan API Key...');
-    }
-
-    // Jika API key tidak dikonfigurasi, gunakan demo data
-    if (GOOGLE_SHEETS_API_KEY === 'your-api-key-here') {
-        console.log('Menggunakan demo data - API Key belum dikonfigurasi');
-        return DEMO_POSTS;
-    }
-
-    try {
-        const range = `${SHEET_NAME}!A:Z`;
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?key=${GOOGLE_SHEETS_API_KEY}`;
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.error) {
-            console.error('Google Sheets API Error:', data.error);
+        } else {
+            console.log('Data kosong dari Google Sheets, menggunakan demo data');
             return DEMO_POSTS;
         }
-
-        const rows = data.values || [];
-        
-        if (rows.length === 0) {
-            console.log('No data found in spreadsheet');
-            return DEMO_POSTS;
-        }
-
-        // Ambil header dari row pertama
-        const headers = rows[0];
-        const posts = [];
-
-        // Convert rows to objects
-        for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
-            const post = {};
-            
-            headers.forEach((header, index) => {
-                post[header.toLowerCase()] = row[index] || '';
-            });
-            
-            // Pastikan ada ID
-            if (!post.id) {
-                post.id = i;
-            }
-            
-            // Generate slug jika belum ada
-            if (!post.slug && post.title) {
-                post.slug = post.title.toLowerCase()
-                    .replace(/[^a-z0-9\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .trim();
-            }
-            
-            posts.push(post);
-        }
-
-        return posts;
     } catch (error) {
-        console.error('Error fetching Google Sheets data:', error);
+        console.log('Koneksi ke Google Sheets gagal:', error.message);
+        console.log('Menggunakan demo data sebagai fallback');
         return DEMO_POSTS;
     }
 }

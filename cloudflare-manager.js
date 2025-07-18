@@ -2,10 +2,9 @@
 // Handles Cloudflare Workers deployment and management
 
 class CloudflareManager {
-    constructor(apiToken, accountId, zoneId = null) {
+    constructor(apiToken, accountId) {
         this.apiToken = apiToken;
         this.accountId = accountId;
-        this.zoneId = zoneId;
         this.baseUrl = 'https://api.cloudflare.com/client/v4';
         this.headers = {
             'Authorization': `Bearer ${apiToken}`,

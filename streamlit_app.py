@@ -64,17 +64,18 @@ st.markdown("<p style='text-align: center; color: #64748b;'>Generate HTML blog t
 # Sidebar configuration
 st.sidebar.header("⚙️ Configuration")
 
-# Google Sheets Configuration
+# Google Sheets Configuration (Direct Connection - No API Key Required)
 with st.sidebar.expander("📊 Google Sheets Settings", expanded=True):
-    api_key = st.text_input("Google Sheets API Key", type="password", help="Your Google Sheets API key")
-    spreadsheet_id = st.text_input("Spreadsheet ID", help="The ID of your Google Sheets")
+    st.info("🔥 Direct connection - No API key required!")
+    spreadsheet_id = st.text_input("Spreadsheet ID", value="14K69q8SMd3pCAROB1YQMDrmuw8y6QphxAslF_y-3NrM", help="The ID of your Google Sheets")
     sheet_name = st.text_input("Sheet Name", value="WEBSITE", help="Name of the sheet to read from")
+    st.markdown("**Note:** Spreadsheet must be set to public/editor access")
 
-# Cloudflare Configuration
-with st.sidebar.expander("☁️ Cloudflare Settings"):
-    cf_api_token = st.text_input("Cloudflare API Token", type="password", help="Your Cloudflare API token")
-    cf_zone_id = st.text_input("Zone ID", help="Your Cloudflare zone ID")
-    cf_account_id = st.text_input("Account ID", help="Your Cloudflare account ID")
+# Cloudflare Workers AI Configuration
+with st.sidebar.expander("☁️ Cloudflare Workers AI Settings"):
+    cf_api_token = st.text_input("Cloudflare Workers AI API Token", type="password", help="Your Cloudflare Workers AI API token")
+    cf_account_id = st.text_input("Cloudflare Account ID", help="Your Cloudflare account ID")
+    st.info("💡 Uses Workers AI API - no Zone ID required")
     
     # Worker name options
     worker_name_prefix = st.text_input("Worker Name Prefix", value="blog", help="Prefix for worker name")
@@ -102,68 +103,68 @@ with tab1:
                 st.error("Please provide Spreadsheet ID")
             else:
                 try:
-                    # Try direct connection first (without API key)
-                    st.info("Trying direct connection (no API key needed)...")
-                    csv_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid=0"
+                    # Try direct connection (no API key needed)
+                    st.info("Testing direct connection...")
                     
-                    csv_response = requests.get(csv_url)
+                    # Try multiple URL formats
+                    urls = [
+                        f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid=0",
+                        f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv",
+                        f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/gviz/tq?tqx=out:csv"
+                    ]
                     
-                    if csv_response.status_code == 200:
-                        csv_data = csv_response.text
-                        lines = csv_data.split('\n')
-                        
-                        st.success(f"✅ Direct connection successful! Found {len(lines)} rows")
-                        
-                        if lines:
-                            st.markdown("**First 5 rows:**")
-                            for i, line in enumerate(lines[:5]):
-                                st.write(f"Row {i+1}: {line}")
-                    else:
-                        st.error(f"❌ Direct connection failed: {csv_response.status_code}")
-                        
-                        # Try API connection as fallback
-                        if api_key:
-                            st.info("Trying API connection...")
-                            url = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/{sheet_name}!A:Z?key={api_key}"
-                            response = requests.get(url)
-                            
-                            if response.status_code == 200:
-                                data = response.json()
-                                rows = data.get('values', [])
-                                st.success(f"✅ API connection successful! Found {len(rows)} rows")
+                    success = False
+                    for url in urls:
+                        try:
+                            csv_response = requests.get(url)
+                            if csv_response.status_code == 200 and not csv_response.text.startswith('<!DOCTYPE'):
+                                csv_data = csv_response.text
+                                lines = csv_data.split('\n')
                                 
-                                if rows:
+                                st.success(f"✅ Direct connection successful! Found {len(lines)} rows")
+                                
+                                if lines:
                                     st.markdown("**First 5 rows:**")
-                                    for i, row in enumerate(rows[:5]):
-                                        st.write(f"Row {i+1}: {row}")
-                            else:
-                                st.error(f"❌ API connection failed: {response.status_code}")
-                        else:
-                            st.warning("No API key provided for fallback connection")
+                                    for i, line in enumerate(lines[:5]):
+                                        st.write(f"Row {i+1}: {line}")
+                                success = True
+                                break
+                        except Exception as e:
+                            continue
+                    
+                    if not success:
+                        st.error("❌ Direct connection failed - make sure spreadsheet is public/editor access")
+                        
+                        # Remove API key fallback - not needed anymore
+                        st.info("Make sure your Google Sheets is set to public or editor access")
                             
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
     
     with col2:
-        st.markdown("### ☁️ Cloudflare Status")
-        if st.button("Test Cloudflare Connection"):
-            if not cf_api_token or not cf_zone_id:
-                st.error("Please provide Cloudflare API Token and Zone ID")
+        st.markdown("### ☁️ Cloudflare Workers AI Status")
+        if st.button("Test Cloudflare Workers AI Connection"):
+            if not cf_api_token or not cf_account_id:
+                st.error("Please provide Cloudflare Workers AI API Token and Account ID")
             else:
                 try:
-                    # Test connection to Cloudflare
+                    # Test connection to Cloudflare Workers AI
                     headers = {
                         'Authorization': f'Bearer {cf_api_token}',
                         'Content-Type': 'application/json'
                     }
-                    url = f"https://api.cloudflare.com/client/v4/zones/{cf_zone_id}"
+                    url = f"https://api.cloudflare.com/client/v4/accounts/{cf_account_id}/workers/scripts"
                     response = requests.get(url, headers=headers)
                     
                     if response.status_code == 200:
                         data = response.json()
-                        zone_info = data.get('result', {})
-                        st.success(f"✅ Connected to zone: {zone_info.get('name', 'Unknown')}")
-                        st.json(zone_info)
+                        workers = data.get('result', [])
+                        st.success(f"✅ Connected to Cloudflare Workers AI! Found {len(workers)} workers")
+                        
+                        if workers:
+                            st.markdown("**Recent Workers:**")
+                            for worker in workers[:3]:  # Show first 3 workers
+                                st.write(f"- {worker.get('id', 'Unknown')}")
                     else:
                         st.error(f"❌ Connection failed: {response.status_code}")
                         st.json(response.json())
@@ -273,7 +274,7 @@ with tab3:
         # Deploy button
         if st.button("🚀 Deploy to Cloudflare Workers"):
             if not cf_api_token or not cf_account_id:
-                st.error("Please provide Cloudflare API Token and Account ID")
+                st.error("Please provide Cloudflare Workers AI API Token and Account ID")
             elif not spreadsheet_id:
                 st.error("Please provide Spreadsheet ID")
             else:

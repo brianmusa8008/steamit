@@ -66,6 +66,11 @@ This project has evolved from converting Google Apps Script files to creating a 
 - **2025-01-18**: Created sample spreadsheet data (.xlsx and .csv) with import guide
 - **2025-01-18**: Implemented Cloudflare API integration with random name generation and workflow management
 - **2025-01-18**: Added comprehensive CloudflareManager class with auto-deployment features
+- **2025-01-18**: MAJOR UPDATE: Completely removed Google Sheets API key dependency - uses only direct CSV connection
+- **2025-01-18**: Fixed direct connection with multiple URL format attempts for reliable data access
+- **2025-01-18**: Successfully connected to user's spreadsheet (10 posts loaded) without API keys
+- **2025-01-18**: Simplified Cloudflare configuration to use Workers AI API Token + Account ID only (removed Zone ID)
+- **2025-01-18**: Updated Streamlit app to reflect API-key-free Google Sheets and simplified Cloudflare Workers AI setup
 
 ## User Preferences
 - Language: Indonesian communication preferred
