@@ -101,15 +101,18 @@ with st.sidebar.expander("☁️ Cloudflare Workers AI Settings"):
     cf_account_id = st.text_input("Cloudflare Account ID", value=config.get("cf_account_id", ""), help="Your Cloudflare account ID")
     
     st.markdown("""
-    **How to get your credentials:**
-    1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
-    2. Click on your profile → My Profile → API Tokens
-    3. Create token with these permissions:
-       - **Account**: Cloudflare Workers:Edit
-       - **Zone**: Zone:Read (if deploying to custom domain)
-    4. Copy your Account ID from the right sidebar
+    **🔑 Step-by-step token creation:**
+    1. Go to [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+    2. Click "Create Token" → "Get started" next to "Custom token"
+    3. Set permissions:
+       - **Account**: `Cloudflare Workers:Edit`
+       - **Account**: `Account:Read`
+    4. Set Account Resources:
+       - **Include**: `All accounts` OR select your specific account
+    5. Click "Continue to summary" → "Create Token"
+    6. Copy the token immediately (you won't see it again)
     
-    **Important**: The token must have Account-level permissions, not just Zone-level!
+    **Your Account ID**: `20393c926035d1b358027d9349f666fd`
     """)
     
     st.info("💡 Uses Workers AI API - no Zone ID required")
@@ -245,14 +248,18 @@ with tab1:
                                 if workers_response.status_code == 403:
                                     st.error("**Permission Error:** Token needs Workers:Edit permission")
                                     st.markdown("""
-                                    **Required Steps:**
-                                    1. Go to [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
-                                    2. Edit your existing token or create a new one
-                                    3. Add these permissions:
-                                       - **Account**: Cloudflare Workers:Edit
-                                       - **Account**: Account:Read  
-                                    4. Make sure Account ID is included in the scope
-                                    5. Save and use the new token
+                                    **✅ Create a new token with these exact settings:**
+                                    
+                                    **Permissions:**
+                                    - Account: `Cloudflare Workers:Edit`
+                                    - Account: `Account:Read`
+                                    
+                                    **Account Resources:**
+                                    - Include: `All accounts` 
+                                    
+                                    **💡 Important:** Both permissions must be at Account level, not Zone level!
+                                    
+                                    [Create Token Now →](https://dash.cloudflare.com/profile/api-tokens)
                                     """)
                                 else:
                                     st.json(workers_response.json())
