@@ -101,16 +101,19 @@ with st.sidebar.expander("☁️ Cloudflare Workers AI Settings"):
     cf_account_id = st.text_input("Cloudflare Account ID", value=config.get("cf_account_id", ""), help="Your Cloudflare account ID")
     
     st.markdown("""
-    **🔑 Step-by-step token creation:**
+    **🔑 IMPORTANT - Create the RIGHT token:**
+    
+    ❌ **NOT "Workers AI"** - that's different!
+    ✅ **Use "Cloudflare Workers"** instead
+    
+    **Step-by-step:**
     1. Go to [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
-    2. Click "Create Token" → "Get started" next to "Custom token"
-    3. Set permissions:
-       - **Account**: `Cloudflare Workers:Edit`
+    2. Click "Create Token" → "Custom token"
+    3. Add these permissions:
+       - **Account**: `Cloudflare Workers:Edit` (NOT Workers AI!)
        - **Account**: `Account:Read`
-    4. Set Account Resources:
-       - **Include**: `All accounts` OR select your specific account
-    5. Click "Continue to summary" → "Create Token"
-    6. Copy the token immediately (you won't see it again)
+    4. Account Resources: Include `All accounts`
+    5. Create token and copy it immediately
     
     **Your Account ID**: `20393c926035d1b358027d9349f666fd`
     """)
@@ -248,16 +251,16 @@ with tab1:
                                 if workers_response.status_code == 403:
                                     st.error("**Permission Error:** Token needs Workers:Edit permission")
                                     st.markdown("""
-                                    **✅ Create a new token with these exact settings:**
+                                    **✅ Create a new token with these EXACT settings:**
                                     
-                                    **Permissions:**
-                                    - Account: `Cloudflare Workers:Edit`
-                                    - Account: `Account:Read`
+                                    **Permissions (Account level):**
+                                    - `Cloudflare Workers:Edit` (NOT "Workers AI"!)
+                                    - `Account:Read`
                                     
                                     **Account Resources:**
                                     - Include: `All accounts` 
                                     
-                                    **💡 Important:** Both permissions must be at Account level, not Zone level!
+                                    **🚨 Common mistake:** "Workers AI" ≠ "Cloudflare Workers"
                                     
                                     [Create Token Now →](https://dash.cloudflare.com/profile/api-tokens)
                                     """)
