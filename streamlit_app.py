@@ -13,6 +13,30 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Configuration file path
+CONFIG_FILE = "app_config.json"
+
+# Load saved configuration
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+# Save configuration
+def save_config(config):
+    try:
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(config, f, indent=2)
+    except Exception as e:
+        st.error(f"Error saving configuration: {e}")
+
+# Load existing configuration
+config = load_config()
+
 # Custom CSS
 st.markdown("""
 <style>
@@ -67,26 +91,49 @@ st.sidebar.header("⚙️ Configuration")
 # Google Sheets Configuration (Direct Connection - No API Key Required)
 with st.sidebar.expander("📊 Google Sheets Settings", expanded=True):
     st.info("🔥 Direct connection - No API key required!")
-    spreadsheet_id = st.text_input("Spreadsheet ID", value="14K69q8SMd3pCAROB1YQMDrmuw8y6QphxAslF_y-3NrM", help="The ID of your Google Sheets")
-    sheet_name = st.text_input("Sheet Name", value="WEBSITE", help="Name of the sheet to read from")
+    spreadsheet_id = st.text_input("Spreadsheet ID", value=config.get("spreadsheet_id", "14K69q8SMd3pCAROB1YQMDrmuw8y6QphxAslF_y-3NrM"), help="The ID of your Google Sheets")
+    sheet_name = st.text_input("Sheet Name", value=config.get("sheet_name", "WEBSITE"), help="Name of the sheet to read from")
     st.markdown("**Note:** Spreadsheet must be set to public/editor access")
 
 # Cloudflare Workers AI Configuration
 with st.sidebar.expander("☁️ Cloudflare Workers AI Settings"):
-    cf_api_token = st.text_input("Cloudflare Workers AI API Token", type="password", help="Your Cloudflare Workers AI API token")
-    cf_account_id = st.text_input("Cloudflare Account ID", help="Your Cloudflare account ID")
+    cf_api_token = st.text_input("Cloudflare Workers AI API Token", type="password", value=config.get("cf_api_token", ""), help="Your Cloudflare Workers AI API token")
+    cf_account_id = st.text_input("Cloudflare Account ID", value=config.get("cf_account_id", ""), help="Your Cloudflare account ID")
     st.info("💡 Uses Workers AI API - no Zone ID required")
     
     # Worker name options
-    worker_name_prefix = st.text_input("Worker Name Prefix", value="blog", help="Prefix for worker name")
-    auto_generate_name = st.checkbox("Auto-generate available name", value=True, help="Automatically generate available worker name")
+    worker_name_prefix = st.text_input("Worker Name Prefix", value=config.get("worker_name_prefix", "blog"), help="Prefix for worker name")
+    auto_generate_name = st.checkbox("Auto-generate available name", value=config.get("auto_generate_name", True), help="Automatically generate available worker name")
+
+# Auto-save indicator
+if os.path.exists(CONFIG_FILE):
+    st.sidebar.success("🔄 Auto-save aktif - Data tersimpan")
 
 # Blog Configuration
 with st.sidebar.expander("📝 Blog Settings", expanded=True):
-    blog_title = st.text_input("Blog Title", value="Blog Sederhana", help="Title of your blog")
-    blog_description = st.text_area("Blog Description", value="Platform blog yang terhubung dengan Google Sheets", help="Description of your blog")
-    blog_keywords = st.text_input("Keywords", value="blog, artikel, google sheets", help="SEO keywords")
-    posts_per_page = st.number_input("Posts per Page", min_value=1, max_value=20, value=6)
+    blog_title = st.text_input("Blog Title", value=config.get("blog_title", "Blog Sederhana"), help="Title of your blog")
+    blog_description = st.text_area("Blog Description", value=config.get("blog_description", "Platform blog yang terhubung dengan Google Sheets"), help="Description of your blog")
+    blog_keywords = st.text_input("Keywords", value=config.get("blog_keywords", "blog, artikel, google sheets"), help="SEO keywords")
+    posts_per_page = st.number_input("Posts per Page", min_value=1, max_value=20, value=config.get("posts_per_page", 6))
+
+# Auto-save configuration when values change
+current_config = {
+    "spreadsheet_id": spreadsheet_id,
+    "sheet_name": sheet_name,
+    "cf_api_token": cf_api_token,
+    "cf_account_id": cf_account_id,
+    "worker_name_prefix": worker_name_prefix,
+    "auto_generate_name": auto_generate_name,
+    "blog_title": blog_title,
+    "blog_description": blog_description,
+    "blog_keywords": blog_keywords,
+    "posts_per_page": posts_per_page
+}
+
+# Save configuration if changed
+if current_config != config:
+    save_config(current_config)
+    config = current_config
 
 # Main content area
 tab1, tab2, tab3, tab4 = st.tabs(["🏠 Dashboard", "📝 Template Generator", "🚀 Deploy", "📊 Preview"])
@@ -429,6 +476,20 @@ with tab4:
         st.markdown("### 🔄 Actions")
         if st.button("🔄 Refresh Preview"):
             st.rerun()
+            
+        st.markdown("### 📁 Configuration")
+        st.json(current_config)
+        
+        if st.button("💾 Save Config"):
+            save_config(current_config)
+            st.success("Configuration saved!")
+            
+        if st.button("🗑️ Clear Config"):
+            if os.path.exists(CONFIG_FILE):
+                os.remove(CONFIG_FILE)
+                st.success("Configuration cleared!")
+            else:
+                st.info("No config file found")
 
 def generate_html_template(config):
     """Generate HTML template based on configuration"""
