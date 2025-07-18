@@ -99,6 +99,15 @@ with st.sidebar.expander("📊 Google Sheets Settings", expanded=True):
 with st.sidebar.expander("☁️ Cloudflare Workers AI Settings"):
     cf_api_token = st.text_input("Cloudflare Workers AI API Token", type="password", value=config.get("cf_api_token", ""), help="Your Cloudflare Workers AI API token")
     cf_account_id = st.text_input("Cloudflare Account ID", value=config.get("cf_account_id", ""), help="Your Cloudflare account ID")
+    
+    st.markdown("""
+    **How to get your credentials:**
+    1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
+    2. Click on your profile → My Profile → API Tokens
+    3. Create token with 'Cloudflare Workers:Edit' permission
+    4. Copy your Account ID from the right sidebar
+    """)
+    
     st.info("💡 Uses Workers AI API - no Zone ID required")
     
     # Worker name options
@@ -200,23 +209,55 @@ with tab1:
                         'Authorization': f'Bearer {cf_api_token}',
                         'Content-Type': 'application/json'
                     }
-                    url = f"https://api.cloudflare.com/client/v4/accounts/{cf_account_id}/workers/scripts"
-                    response = requests.get(url, headers=headers)
                     
-                    if response.status_code == 200:
-                        data = response.json()
-                        workers = data.get('result', [])
-                        st.success(f"✅ Connected to Cloudflare Workers AI! Found {len(workers)} workers")
+                    # Test with Workers AI endpoint first
+                    ai_url = f"https://api.cloudflare.com/client/v4/accounts/{cf_account_id}/ai/models"
+                    ai_response = requests.get(ai_url, headers=headers)
+                    
+                    if ai_response.status_code == 200:
+                        ai_data = ai_response.json()
+                        models = ai_data.get('result', [])
+                        st.success(f"✅ Connected to Cloudflare Workers AI! Found {len(models)} AI models available")
                         
-                        if workers:
-                            st.markdown("**Recent Workers:**")
-                            for worker in workers[:3]:  # Show first 3 workers
-                                st.write(f"- {worker.get('id', 'Unknown')}")
+                        if models:
+                            st.markdown("**Available AI Models:**")
+                            for model in models[:5]:  # Show first 5 models
+                                st.write(f"- {model.get('name', 'Unknown')}")
                     else:
-                        st.error(f"❌ Connection failed: {response.status_code}")
-                        st.json(response.json())
+                        # Fallback to account verification
+                        account_url = f"https://api.cloudflare.com/client/v4/accounts/{cf_account_id}"
+                        account_response = requests.get(account_url, headers=headers)
+                        
+                        if account_response.status_code == 200:
+                            account_data = account_response.json()
+                            account_name = account_data.get('result', {}).get('name', 'Unknown')
+                            st.success(f"✅ Connected to Cloudflare! Account: {account_name}")
+                            st.info("Note: Workers AI models may not be available in your account plan")
+                        else:
+                            st.error(f"❌ Connection failed: {account_response.status_code}")
+                            error_data = account_response.json()
+                            st.json(error_data)
+                            
+                            # Provide helpful error messages
+                            if account_response.status_code == 403:
+                                st.error("**Authentication Error:** Please check your API token and account ID")
+                                st.markdown("""
+                                **Troubleshooting Steps:**
+                                1. Verify your API token has the correct permissions
+                                2. Check that your account ID is correct
+                                3. Ensure your token has 'Cloudflare Workers:Edit' permissions
+                                4. Make sure Workers AI is enabled in your account
+                                """)
+                            elif account_response.status_code == 404:
+                                st.error("**Account Not Found:** Please verify your account ID")
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
+                    st.markdown("""
+                    **Common Issues:**
+                    - Check internet connection
+                    - Verify API token format (should start with your account ID)
+                    - Ensure account ID is correct (32-character hex string)
+                    """)
 
 with tab2:
     st.header("🎨 Template Generator")
